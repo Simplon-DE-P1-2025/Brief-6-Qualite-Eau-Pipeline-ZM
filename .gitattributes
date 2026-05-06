@@ -1,0 +1,2 @@
+data/raw/**/*.json filter=lfs diff=lfs merge=lfs -text
+.releaserc.json !text !filter !merge !diff
