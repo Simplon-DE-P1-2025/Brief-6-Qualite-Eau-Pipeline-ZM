@@ -38,8 +38,7 @@ def run_validation():
 
     suite = context.add_or_update_expectation_suite("silver_suite")
     validator = context.get_validator(
-        batch_request=batch_request,
-        expectation_suite=suite
+        batch_request=batch_request, expectation_suite=suite
     )
 
     # Règles
@@ -49,11 +48,12 @@ def run_validation():
     validator.expect_column_values_to_not_be_null("code_commune")
     validator.expect_column_values_to_not_be_null("date_prelevement")
     validator.expect_column_values_to_match_regex(
-        "code_commune", r"^\d{5}$", mostly=0.99)
+        "code_commune", r"^\d{5}$", mostly=0.99
+    )
     validator.expect_column_values_to_be_in_set(
         "conclusion_conformite_prelevement",
         list(df["conclusion_conformite_prelevement"].dropna().unique()),
-        mostly=0.95
+        mostly=0.95,
     )
 
     validator.save_expectation_suite()
@@ -76,15 +76,21 @@ def run_validation():
         print(f"  {status} {r.expectation_config.expectation_type} {col}")
 
     # Sauvegarde rapport JSON
-    report_path = REPORT_DIR / f"rapport_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    report_path = (
+        REPORT_DIR / f"rapport_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    )
     with open(report_path, "w", encoding="utf-8") as f:
-        json.dump({
-            "date": datetime.now().isoformat(),
-            "succes": results.success,
-            "nb_regles_ok": results.statistics["successful_expectations"],
-            "nb_regles_ko": results.statistics["unsuccessful_expectations"],
-            "nb_regles_total": results.statistics["evaluated_expectations"],
-        }, f, indent=2)
+        json.dump(
+            {
+                "date": datetime.now().isoformat(),
+                "succes": results.success,
+                "nb_regles_ok": results.statistics["successful_expectations"],
+                "nb_regles_ko": results.statistics["unsuccessful_expectations"],
+                "nb_regles_total": results.statistics["evaluated_expectations"],
+            },
+            f,
+            indent=2,
+        )
     print(f"\n✅ Rapport sauvegardé : {report_path}")
 
     return results.success

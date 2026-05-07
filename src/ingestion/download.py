@@ -9,7 +9,9 @@ import json
 import time
 from pathlib import Path
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 API_BASE = "https://hubeau.eaufrance.fr/api/v1/qualite_eau_potable"
@@ -37,7 +39,7 @@ def fetch_resultats(code_departement: str, annee: int) -> list[dict]:
             "limite_qualite_parametre,reference_qualite_parametre,"
             "conclusion_conformite_prelevement,"
             "coordonnee_x,coordonnee_y"
-        )
+        ),
     }
     results = []
     while True:

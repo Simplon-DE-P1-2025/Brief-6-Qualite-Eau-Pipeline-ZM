@@ -13,7 +13,7 @@ load_dotenv()
 app = FastAPI(
     title="API Qualité de l'eau",
     description="Données du contrôle sanitaire de l'eau distribuée en France",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 app.add_middleware(
@@ -54,7 +54,7 @@ def root():
             "/top/meilleures",
             "/top/pires",
             "/non-conformites/{code_dept}",
-        ]
+        ],
     }
 
 
@@ -88,7 +88,8 @@ def get_conformite_commune(code_commune: str, annee: int = None):
 
 @app.get("/departements/{code_dept}/conformite")
 def get_conformite_departement(code_dept: str):
-    rows = query(f"""
+    rows = query(
+        f"""
         SELECT
             annee,
             COUNT(*) as nb_communes,
@@ -98,7 +99,8 @@ def get_conformite_departement(code_dept: str):
         WHERE _departement = '{code_dept}'
         GROUP BY annee
         ORDER BY annee DESC
-    """)
+    """
+    )
     if not rows:
         raise HTTPException(404, f"Département {code_dept} non trouvé")
     return rows
@@ -106,21 +108,29 @@ def get_conformite_departement(code_dept: str):
 
 @app.get("/top/meilleures")
 def top_meilleures():
-    return query(f"SELECT * FROM {CATALOG}.{DB}.gold_top10_meilleures ORDER BY taux_conformite_pct DESC")
+    return query(
+        f"SELECT * FROM {CATALOG}.{DB}.gold_top10_meilleures ORDER BY taux_conformite_pct DESC"
+    )
 
 
 @app.get("/top/pires")
 def top_pires():
-    return query(f"SELECT * FROM {CATALOG}.{DB}.gold_top10_pires ORDER BY taux_conformite_pct ASC")
+    return query(
+        f"SELECT * FROM {CATALOG}.{DB}.gold_top10_pires ORDER BY taux_conformite_pct ASC"
+    )
 
 
 @app.get("/non-conformites/{code_dept}")
 def non_conformites(code_dept: str):
-    rows = query(f"""
+    rows = query(
+        f"""
         SELECT * FROM {CATALOG}.{DB}.gold_non_conformites
         WHERE _departement = '{code_dept}'
         ORDER BY nb_non_conformites DESC
-    """)
+    """
+    )
     if not rows:
-        raise HTTPException(404, f"Aucune non-conformité pour le département {code_dept}")
+        raise HTTPException(
+            404, f"Aucune non-conformité pour le département {code_dept}"
+        )
     return rows
