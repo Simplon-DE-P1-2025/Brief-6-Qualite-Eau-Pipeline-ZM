@@ -17,8 +17,8 @@ logger = logging.getLogger(__name__)
 API_BASE = "https://hubeau.eaufrance.fr/api/v1/qualite_eau_potable"
 OUTPUT_DIR = Path(__file__).resolve().parents[2] / "data" / "raw"
 
-DEPARTEMENTS = ["64"]
-ANNEES = [2025, 2026]
+DEPARTEMENTS = ["65"]
+ANNEES = [2026]
 
 
 def fetch_resultats(code_departement: str, annee: int) -> list[dict]:
