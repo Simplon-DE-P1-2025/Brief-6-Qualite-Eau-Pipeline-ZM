@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/Simplon-DE-P1-2025/Brief-6-Qualite-Eau-Pipeline-ZM/compare/v1.1.0...v1.1.1) (2026-05-07)
+
+
+### Bug Fixes
+
+* update notebook paths to use .ipynb extensions ([51381b6](https://github.com/Simplon-DE-P1-2025/Brief-6-Qualite-Eau-Pipeline-ZM/commit/51381b6bda3f6bc25f0292a5657054778c8971f5))
+
 # [1.1.0](https://github.com/Simplon-DE-P1-2025/Brief-6-Qualite-Eau-Pipeline-ZM/compare/v1.0.0...v1.1.0) (2026-05-07)
 
 
