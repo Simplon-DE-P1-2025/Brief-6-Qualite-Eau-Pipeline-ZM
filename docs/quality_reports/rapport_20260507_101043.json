@@ -1,3 +1,7 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:3b132d6795f12823dda09d9e6f235215dcf2f4797a1cac39f346c15904ab2aa1
-size 132
+{
+  "date": "2026-05-07T10:10:43.491162",
+  "succes": true,
+  "nb_regles_ok": 7,
+  "nb_regles_ko": 0,
+  "nb_regles_total": 7
+}
