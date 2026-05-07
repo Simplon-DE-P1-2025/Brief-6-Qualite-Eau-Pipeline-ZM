@@ -9,7 +9,6 @@ from databricks import sql
 from dotenv import load_dotenv
 import os
 import plotly.express as px
-import plotly.graph_objects as go
 
 load_dotenv()
 
@@ -43,6 +42,19 @@ def query(sql_query: str) -> pd.DataFrame:
 CATALOG = "workspace"
 DB = "qualite_eau"
 
+# ─── Chargement des données ─────────────────────────────────────────────────
+
+df_conformite = query(f"SELECT * FROM {CATALOG}.{DB}.gold_conformite_commune")
+df_non_conformites = query(f"SELECT * FROM {CATALOG}.{DB}.gold_non_conformites")
+df_evolution = query(f"SELECT * FROM {CATALOG}.{DB}.gold_evolution_parametres")
+df_top_meilleures = query(f"SELECT * FROM {CATALOG}.{DB}.gold_top10_meilleures")
+df_top_pires = query(f"SELECT * FROM {CATALOG}.{DB}.gold_top10_pires")
+
+# Forcer les types string pour éviter les axes numériques
+df_conformite["_departement"] = df_conformite["_departement"].astype(str)
+df_non_conformites["_departement"] = df_non_conformites["_departement"].astype(str)
+df_evolution["_departement"] = df_evolution["_departement"].astype(str)
+
 # ─── Header ────────────────────────────────────────────────────────────────
 
 st.title("💧 Qualité de l'eau en France")
@@ -50,12 +62,6 @@ st.caption("Données du contrôle sanitaire — Départements 31, 33, 40, 64, 65
 st.divider()
 
 # ─── KPIs ──────────────────────────────────────────────────────────────────
-
-df_conformite = query(f"SELECT * FROM {CATALOG}.{DB}.gold_conformite_commune")
-df_non_conformites = query(f"SELECT * FROM {CATALOG}.{DB}.gold_non_conformites")
-df_evolution = query(f"SELECT * FROM {CATALOG}.{DB}.gold_evolution_parametres")
-df_top_meilleures = query(f"SELECT * FROM {CATALOG}.{DB}.gold_top10_meilleures")
-df_top_pires = query(f"SELECT * FROM {CATALOG}.{DB}.gold_top10_pires")
 
 col1, col2, col3, col4 = st.columns(4)
 with col1:
@@ -81,6 +87,8 @@ df_dept = (
     .reset_index()
 )
 df_dept["annee"] = df_dept["annee"].astype(str)
+df_dept["_departement"] = df_dept["_departement"].astype(str)
+df_dept = df_dept.sort_values("_departement")
 
 fig1 = px.bar(
     df_dept,
@@ -88,6 +96,7 @@ fig1 = px.bar(
     y="taux_moyen",
     color="annee",
     barmode="group",
+    text_auto=".1f",
     labels={
         "_departement": "Département",
         "taux_moyen": "Taux de conformité (%)",
@@ -95,7 +104,11 @@ fig1 = px.bar(
     },
     color_discrete_sequence=px.colors.qualitative.Set2
 )
-fig1.update_layout(yaxis_range=[70, 100])
+fig1.update_layout(
+    yaxis_range=[70, 100],
+    xaxis_type="category",
+    xaxis_title="Département",
+)
 st.plotly_chart(fig1, use_container_width=True)
 
 st.divider()
@@ -104,36 +117,43 @@ st.divider()
 
 st.subheader("📈 Evolution mensuelle des paramètres clés")
 
-col_filtre1, col_filtre2 = st.columns(2)
-with col_filtre1:
-    categories = df_evolution["categorie_parametre"].unique().tolist()
-    categorie = st.selectbox("Catégorie", categories)
+if df_evolution.empty:
+    st.warning("Aucune donnée disponible pour l'évolution des paramètres.")
+else:
+    col_filtre1, col_filtre2 = st.columns(2)
+    with col_filtre1:
+        categories = sorted(df_evolution["categorie_parametre"].unique().tolist())
+        categorie = st.selectbox("Catégorie", categories)
 
-with col_filtre2:
-    params_filtres = df_evolution[
-        df_evolution["categorie_parametre"] == categorie
-    ]["libelle_parametre"].unique().tolist()
-    parametre = st.selectbox("Paramètre", params_filtres)
+    with col_filtre2:
+        params_filtres = sorted(df_evolution[
+            df_evolution["categorie_parametre"] == categorie
+        ]["libelle_parametre"].unique().tolist())
+        parametre = st.selectbox("Paramètre", params_filtres)
 
-df_param = df_evolution[
-    (df_evolution["libelle_parametre"] == parametre)
-].copy()
-df_param["periode"] = df_param["annee"].astype(str) + "-" + df_param["mois"].astype(str).str.zfill(2)
-df_param = df_param.sort_values("periode")
+    df_param = df_evolution[
+        df_evolution["libelle_parametre"] == parametre
+    ].copy()
+    df_param["periode"] = (
+        df_param["annee"].astype(str) + "-" +
+        df_param["mois"].astype(str).str.zfill(2)
+    )
+    df_param = df_param.sort_values("periode")
 
-fig2 = px.line(
-    df_param,
-    x="periode",
-    y="valeur_moyenne",
-    color="_departement",
-    markers=True,
-    labels={
-        "periode": "Période",
-        "valeur_moyenne": "Valeur moyenne",
-        "_departement": "Département"
-    }
-)
-st.plotly_chart(fig2, use_container_width=True)
+    fig2 = px.line(
+        df_param,
+        x="periode",
+        y="valeur_moyenne",
+        color="_departement",
+        markers=True,
+        labels={
+            "periode": "Période",
+            "valeur_moyenne": "Valeur moyenne",
+            "_departement": "Département"
+        }
+    )
+    fig2.update_layout(xaxis_type="category")
+    st.plotly_chart(fig2, use_container_width=True)
 
 st.divider()
 
@@ -152,12 +172,17 @@ with col_top1:
         orientation="h",
         color="taux_conformite_pct",
         color_continuous_scale="Greens",
+        text_auto=".1f",
         labels={
             "taux_conformite_pct": "Taux (%)",
             "nom_commune": "Commune"
         }
     )
-    fig3.update_layout(showlegend=False, coloraxis_showscale=False)
+    fig3.update_layout(
+        showlegend=False,
+        coloraxis_showscale=False,
+        yaxis={"categoryorder": "total ascending"}
+    )
     st.plotly_chart(fig3, use_container_width=True)
 
 with col_top2:
@@ -169,12 +194,18 @@ with col_top2:
         orientation="h",
         color="taux_conformite_pct",
         color_continuous_scale="Reds_r",
+        text_auto=".1f",
         labels={
             "taux_conformite_pct": "Taux (%)",
             "nom_commune": "Commune"
         }
     )
-    fig4.update_layout(showlegend=False, coloraxis_showscale=False)
+    fig4.update_layout(
+        showlegend=False,
+        coloraxis_showscale=False,
+        yaxis={"categoryorder": "total descending"},
+        xaxis_range=[0, 100]  # ← force l'axe de 0 à 100
+    )
     st.plotly_chart(fig4, use_container_width=True)
 
 st.divider()
@@ -199,6 +230,7 @@ with col_nc1:
         names="categorie_parametre",
         color_discrete_sequence=px.colors.qualitative.Set3
     )
+    fig5.update_traces(textposition="inside", textinfo="percent+label")
     st.plotly_chart(fig5, use_container_width=True)
 
 with col_nc2:
@@ -210,6 +242,7 @@ with col_nc2:
         .reset_index()
         .sort_values("total", ascending=True)
     )
+    df_dept_nc["_departement"] = df_dept_nc["_departement"].astype(str)
     fig6 = px.bar(
         df_dept_nc,
         x="total",
@@ -217,12 +250,16 @@ with col_nc2:
         orientation="h",
         color="total",
         color_continuous_scale="Oranges",
+        text_auto=True,
         labels={
             "total": "Nombre de non-conformités",
             "_departement": "Département"
         }
     )
-    fig6.update_layout(coloraxis_showscale=False)
+    fig6.update_layout(
+        coloraxis_showscale=False,
+        yaxis_type="category"
+    )
     st.plotly_chart(fig6, use_container_width=True)
 
 st.divider()
