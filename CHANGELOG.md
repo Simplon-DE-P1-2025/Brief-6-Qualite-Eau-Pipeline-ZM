@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/Simplon-DE-P1-2025/Brief-6-Qualite-Eau-Pipeline-ZM/compare/v1.0.0...v1.1.0) (2026-05-07)
+
+
+### Features
+
+* update CI/CD workflows and restore Databricks configuration ([6d6e4fb](https://github.com/Simplon-DE-P1-2025/Brief-6-Qualite-Eau-Pipeline-ZM/commit/6d6e4fbffd68d1bc3c4b084f9c934f91d923d493))
+
 # 1.0.0 (2026-05-07)
 
 
